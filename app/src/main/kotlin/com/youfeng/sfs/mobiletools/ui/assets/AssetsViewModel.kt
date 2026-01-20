@@ -6,6 +6,7 @@ import com.youfeng.sfs.mobiletools.data.repository.DataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
@@ -13,7 +14,14 @@ class AssetsViewModel @Inject constructor(
     private val dataRepository: DataRepository
 ) : ViewModel() {
 
-    fun getList(): List<AssetInfo> {
-        return dataRepository.getCustomTranslationsList()
+    private val _uiState = MutableStateFlow(AssetsUiState())
+    val uiState: StateFlow<AssetsUiState> = _uiState
+
+    init {
+        updateAssetsList()
+    }
+
+    fun updateAssetsList() {
+        _uiState.update { it.copy(assetsList = dataRepository.getAssetsList()) }
     }
 }

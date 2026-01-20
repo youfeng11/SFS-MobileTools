@@ -12,6 +12,15 @@ object SfsFileConfig {
     // SFS 资源目录路径
     val assetsDirectoryPath = externalStoragePath / "Android" / "media" / PACKAGE_NAME
 
+    // 蓝图
+    val blueprintsPath = assetsDirectoryPath / "Saving" / "Blueprints"
+
+    // 世界
+    val worldsPath = assetsDirectoryPath / "Saving" / "Worlds"
+
+    // 自定义星系
+    val customSolarSystemsPath = assetsDirectoryPath / "Custom Solar Systems"
+
     // 自定义翻译
-    const val CUSTOM_TRANSLATIONS = "Custom Translations"
+    val customTranslationsPath = assetsDirectoryPath / "Custom Translations"
 }
