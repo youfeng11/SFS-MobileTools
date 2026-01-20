@@ -3,4 +3,10 @@
     <string name="navigation_home">主页</string>
     <string name="navigation_assets">资源</string>
     <string name="navigation_settings">设置</string>
+    <string name="tab_all">全部</string>
+    <string name="tab_blueprints">蓝图</string>
+    <string name="tab_mods">Mods</string>
+    <string name="tab_worlds">世界</string>
+    <string name="tab_custom_solar_systems">星系</string>
+    <string name="tab_custom_translations">翻译</string>
 </resources>

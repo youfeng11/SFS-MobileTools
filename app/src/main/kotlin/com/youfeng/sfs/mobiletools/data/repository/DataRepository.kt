@@ -1,6 +1,8 @@
 package com.youfeng.sfs.mobiletools.data.repository
 
 import android.content.Context
+import com.youfeng.sfs.mobiletools.common.model.AssetInfo
+import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.data.SfsFileConfig
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -9,14 +11,14 @@ import okio.Path.Companion.toOkioPath
 import okio.Path
 
 interface DataRepository {
-    fun getCustomTranslationsList(): List<String>
+    fun getCustomTranslationsList(): List<AssetInfo>
 }
 
 @Singleton
 class DataRepositoryImpl @Inject constructor() : DataRepository {
     val fileSystem = FileSystem.SYSTEM
 
-    override fun getCustomTranslationsList(): List<String> {
+    override fun getCustomTranslationsList(): List<AssetInfo> {
         val exampleFile = "Example.txt"
         val directory = SfsFileConfig.assetsDirectoryPath / SfsFileConfig.CUSTOM_TRANSLATIONS
         val filesSequence = fileSystem.list(directory)
@@ -27,7 +29,12 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
                 path.name.endsWith(".txt") &&
                 path.name != exampleFile
             }
-            .map { path -> path.name.removeSuffix(".txt") }
+            .map { path ->
+                AssetInfo(
+                    name = path.name.removeSuffix(".txt"),
+                    type = AssetType.CustomTranslation
+                )
+            }
             .toList()
     }
 }
