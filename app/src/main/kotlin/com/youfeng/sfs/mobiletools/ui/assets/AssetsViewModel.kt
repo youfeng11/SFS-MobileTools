@@ -24,4 +24,9 @@ class AssetsViewModel @Inject constructor(
     fun updateAssetsList() {
         _uiState.update { it.copy(assetsList = dataRepository.getAssetsList()) }
     }
+
+    fun deleteAsset(asset: AssetInfo) {
+        dataRepository.deleteAsset(asset)
+        updateAssetsList() // 删除后立即刷新 UI
+    }
 }

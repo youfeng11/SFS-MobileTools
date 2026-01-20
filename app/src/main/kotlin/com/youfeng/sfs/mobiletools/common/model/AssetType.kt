@@ -10,6 +10,6 @@ sealed class AssetType {
 
 enum class ModType {
     CODE_MOD,
-    PART_ASSET_PQCK,
+    PART_ASSET_PACK,
     TEXTURE_PACK
 }

@@ -15,6 +15,10 @@ object SfsFileConfig {
     // 蓝图
     val blueprintsPath = assetsDirectoryPath / "Saving" / "Blueprints"
 
+    // Mods
+    val partsModsPath = assetsDirectoryPath / "Mods" / "Custom_Assets" / "Parts"
+    val texturePacksModsPath = assetsDirectoryPath / "Mods" / "Custom_Assets" / "Texture Packs"
+
     // 世界
     val worldsPath = assetsDirectoryPath / "Saving" / "Worlds"
 
