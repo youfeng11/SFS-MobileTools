@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -17,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,151 +46,118 @@ import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.common.model.ModType
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Surface {
-        AssetsLayout(
-            uiState = uiState,
-            onDeleteAsset = { viewModel.deleteAsset(it) } // 传递 ViewModel 方法
-        )
+    // Optional: Reload when screen becomes active if data might change externally
+    LaunchedEffect(Unit) {
+        viewModel.loadAssets() 
     }
-    
-    LifecycleEventEffect(Lifecycle.Event.ON_START) {
-        viewModel.updateAssetsList()
-    }
+
+    AssetsLayout(
+        uiState = uiState,
+        onTabSelected = viewModel::onTabSelected,
+        onDeleteClick = viewModel::showDeleteConfirmation,
+        onConfirmDelete = viewModel::confirmDelete,
+        onDismissDelete = { viewModel.showDeleteConfirmation(null) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssetsLayout(
     uiState: AssetsUiState,
-    onDeleteAsset: (AssetInfo) -> Unit
+    onTabSelected: (Tabs) -> Unit,
+    onDeleteClick: (AssetInfo) -> Unit,
+    onConfirmDelete: () -> Unit,
+    onDismissDelete: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    var selectedTab by remember { mutableStateOf(Tabs.ALL) }
-
-    var assetToDelete by remember { mutableStateOf<AssetInfo?>(null) }
-
-    // 确认删除对话框
-    assetToDelete?.let { asset ->
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { assetToDelete = null },
-            title = { Text("确认删除") },
-            text = { Text("确定要删除 '${asset.name}' 吗？此操作不可撤销。") },
+    // Dialog Logic
+    if (uiState.assetToDelete != null) {
+        AlertDialog(
+            onDismissRequest = onDismissDelete,
+            title = { Text("确定删除吗？") },
+            text = { Text("确定要删除 \"${uiState.assetToDelete.name}\" 吗？\n此操作不可撤销！") },
             confirmButton = {
-                androidx.compose.material3.TextButton(
-                    onClick = {
-                        onDeleteAsset(asset)
-                        assetToDelete = null
-                    }
-                ) {
+                TextButton(onClick = onConfirmDelete) {
                     Text("删除", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { assetToDelete = null }) {
-                    Text("取消")
-                }
+                TextButton(onClick = onDismissDelete) { Text("取消") }
             }
         )
-    }
-
-    val filteredAssets = remember(selectedTab, uiState.assetsList) {
-        uiState.assetsList?.run {
-            when (selectedTab) {
-                Tabs.BLUEPRINTS ->
-                    filter { it.type is AssetType.Blueprint }
-                Tabs.MODS ->
-                    filter { it.type is AssetType.Mod }
-                Tabs.WORLDS ->
-                    filter { it.type is AssetType.World }
-                Tabs.CUSTOM_SOLAR_SYSTEMS ->
-                    filter { it.type is AssetType.CustomSolarSystem }
-                Tabs.CUSTOM_TRANSLATIONS ->
-                    filter { it.type is AssetType.CustomTranslation }
-                else -> this
-            }
-        }
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-                Column {
-                    TopAppBar(
-                        title = { Text(stringResource(R.string.navigation_assets)) },
-                        scrollBehavior = scrollBehavior
-                    )
-                    SecondaryScrollableTabRow(
-                        selectedTabIndex = Tabs.entries.indexOf(selectedTab),
-                        edgePadding = 0.dp,
-                        divider = {
-                            HorizontalDivider()
-                        } 
-                    ) {
-                        Tabs.entries.forEach { tab ->
-                            Tab(
-                                selected = selectedTab == tab,
-                                onClick = { selectedTab = tab },
-                                text = { Text(stringResource(tab.label)) }
-                            )
-                        }
+            Column {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.navigation_assets)) },
+                    scrollBehavior = scrollBehavior
+                )
+                SecondaryScrollableTabRow(
+                    selectedTabIndex = Tabs.entries.indexOf(uiState.selectedTab),
+                    edgePadding = 0.dp
+                ) {
+                    Tabs.entries.forEach { tab ->
+                        Tab(
+                            selected = uiState.selectedTab == tab,
+                            onClick = { onTabSelected(tab) },
+                            text = { Text(stringResource(tab.label)) }
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            filteredAssets?.let {
-                items(
-                    items = it,
-                    key = { it.name } // 如果 name 唯一
-                ) { asset ->
-                    AssetItem(asset, { assetToDelete = asset })
+        // Content Area
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (uiState.assets.isEmpty()) {
+                UnavailableText(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(
+                        items = uiState.assets,
+                        key = { it.name } // Ensure name is unique, otherwise use a fallback ID
+                    ) { asset ->
+                        AssetItem(asset = asset, onDeleteClick = { onDeleteClick(asset) })
+                    }
                 }
-            } ?: item { UnavailableText() }
+            }
         }
     }
 }
 
 @Composable
 fun AssetItem(
-    asset: AssetInfo, 
-    onDeleteClick: () -> Unit // 新增回调
+    asset: AssetInfo,
+    onDeleteClick: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
-        Row( // 使用 Row 布局
-            modifier = Modifier.padding(24.dp),
+        Row(
+            modifier = Modifier.padding(16.dp), // Adjusted padding
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = asset.name, style = MaterialTheme.typography.titleMedium)
+                // Use the helper extension here for cleaner code
                 Text(
-                    text = when (asset.type) {
-                        is AssetType.Blueprint -> stringResource(R.string.asset_type_blueprint)
-                        is AssetType.Mod -> stringResource(R.string.asset_type_mod, stringResource(
-                            when (asset.type.type) {
-                                ModType.CODE_MOD -> R.string.mod_type_code_mod
-                                ModType.PART_ASSET_PACK -> R.string.mod_type_part_asset_pack
-                                ModType.TEXTURE_PACK -> R.string.mod_type_texture_pack
-                            }
-                        ))
-                        is AssetType.World -> stringResource(R.string.asset_type_world)
-                        is AssetType.CustomSolarSystem -> stringResource(R.string.asset_type_custom_solar_system)
-                        is AssetType.CustomTranslation -> stringResource(R.string.asset_type_custom_translation)
-                    },
+                    text = asset.type.toDisplayName(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            // 添加删除按钮
             IconButton(onClick = onDeleteClick) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.delete_24px),
@@ -201,8 +170,17 @@ fun AssetItem(
 }
 
 @Composable
-fun UnavailableText() {
-    Card {
-        Text("不可用", modifier = Modifier.padding(24.dp))
+fun UnavailableText(modifier: Modifier = Modifier) {
+    // Improved Empty State
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // You could add an Icon here later
+        Text(
+            text = "这里空空如也", // Or string resource
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
