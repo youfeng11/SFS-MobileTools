@@ -21,24 +21,27 @@ class AssetsViewModel @Inject constructor(
     private val dataRepository: DataRepository
 ) : ViewModel() {
 
-    // 1. Raw Data Streams (Internal)
+    // Internal state streams
     private val _rawAssets = MutableStateFlow<List<AssetInfo>>(emptyList())
-    private val _selectedTab = MutableStateFlow(Tabs.ALL)
+    private val _selectedTabIndex = MutableStateFlow(0) // 直接存储索引而不是 Tab 枚举
     private val _assetToDelete = MutableStateFlow<AssetInfo?>(null)
     private val _isLoading = MutableStateFlow(false)
 
-    // 2. Combined UI State (Reactive Output)
-    // 只要 Tab 变了，或者 原始列表变了，UiState 自动重新计算
+    // Public UI state with filtered assets per tab
     val uiState: StateFlow<AssetsUiState> = combine(
         _rawAssets,
-        _selectedTab,
+        _selectedTabIndex,
         _assetToDelete,
         _isLoading
-    ) { assets, tab, toDelete, loading ->
+    ) { assets, tabIndex, toDelete, loading ->
         AssetsUiState(
             isLoading = loading,
-            selectedTab = tab,
-            assets = filterAssets(assets, tab),
+            selectedTabIndex = tabIndex,
+            allAssets = assets,
+            // 为每个 Tab 预先计算好过滤后的列表
+            filteredAssetsByTab = Tabs.entries.map { tab ->
+                filterAssets(assets, tab)
+            },
             assetToDelete = toDelete
         )
     }.stateIn(
@@ -51,16 +54,13 @@ class AssetsViewModel @Inject constructor(
         loadAssets()
     }
 
-    // 3. Operations (Actions)
     fun loadAssets() {
-        viewModelScope.launch(Dispatchers.IO) { // Switch to IO thread for file operations
+        viewModelScope.launch(Dispatchers.IO) {
             _isLoading.update { true }
             try {
-                // 模拟耗时或磁盘IO
-                val list = dataRepository.getAssetsList() 
+                val list = dataRepository.getAssetsList()
                 _rawAssets.value = list
             } catch (e: Exception) {
-                // Handle error state if needed
                 _rawAssets.value = emptyList()
             } finally {
                 _isLoading.update { false }
@@ -68,8 +68,11 @@ class AssetsViewModel @Inject constructor(
         }
     }
 
-    fun onTabSelected(tab: Tabs) {
-        _selectedTab.value = tab
+    // 统一的 Tab 切换入口，只接受索引
+    fun onTabIndexChanged(index: Int) {
+        if (index in Tabs.entries.indices) {
+            _selectedTabIndex.value = index
+        }
     }
 
     fun showDeleteConfirmation(asset: AssetInfo?) {
@@ -81,14 +84,12 @@ class AssetsViewModel @Inject constructor(
         
         viewModelScope.launch(Dispatchers.IO) {
             dataRepository.deleteAsset(asset)
-            // Refresh list after delete
             val updatedList = dataRepository.getAssetsList()
             _rawAssets.value = updatedList
             _assetToDelete.value = null
         }
     }
 
-    // Pure function for filtering
     private fun filterAssets(assets: List<AssetInfo>, tab: Tabs): List<AssetInfo> {
         return when (tab) {
             Tabs.ALL -> assets

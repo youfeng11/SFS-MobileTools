@@ -1,86 +1,103 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.youfeng.sfs.mobiletools.R
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
-import com.youfeng.sfs.mobiletools.common.model.ModType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
 
 @Composable
 fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Optional: Reload when screen becomes active if data might change externally
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
-        viewModel.loadAssets() 
+        viewModel.loadAssets()
     }
 
     AssetsLayout(
         uiState = uiState,
-        onTabSelected = viewModel::onTabSelected,
+        onTabIndexChanged = viewModel::onTabIndexChanged,
         onDeleteClick = viewModel::showDeleteConfirmation,
         onConfirmDelete = viewModel::confirmDelete,
         onDismissDelete = { viewModel.showDeleteConfirmation(null) }
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AssetsLayout(
     uiState: AssetsUiState,
-    onTabSelected: (Tabs) -> Unit,
+    onTabIndexChanged: (Int) -> Unit,
     onDeleteClick: (AssetInfo) -> Unit,
     onConfirmDelete: () -> Unit,
     onDismissDelete: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val tabs = Tabs.entries
+    val pagerState = rememberPagerState(
+        initialPage = uiState.selectedTabIndex,
+        pageCount = { tabs.size }
+    )
+    val scope = rememberCoroutineScope()
 
-    // Dialog Logic
+    // 单一的双向同步：Pager 滑动时通知 ViewModel
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            if (uiState.selectedTabIndex != page) {
+                onTabIndexChanged(page)
+            }
+        }
+    }
+
+    // ViewModel 状态变化时同步到 Pager（例如点击 Tab 时）
+    LaunchedEffect(uiState.selectedTabIndex) {
+        if (pagerState.currentPage != uiState.selectedTabIndex) {
+            pagerState.animateScrollToPage(uiState.selectedTabIndex)
+        }
+    }
+
+    // Delete confirmation dialog
     if (uiState.assetToDelete != null) {
         AlertDialog(
             onDismissRequest = onDismissDelete,
@@ -106,13 +123,15 @@ fun AssetsLayout(
                     scrollBehavior = scrollBehavior
                 )
                 SecondaryScrollableTabRow(
-                    selectedTabIndex = Tabs.entries.indexOf(uiState.selectedTab),
+                    selectedTabIndex = pagerState.currentPage,
                     edgePadding = 0.dp
                 ) {
-                    Tabs.entries.forEach { tab ->
+                    tabs.forEachIndexed { index, tab ->
                         Tab(
-                            selected = uiState.selectedTab == tab,
-                            onClick = { onTabSelected(tab) },
+                            selected = pagerState.currentPage == index,
+                            onClick = {
+                                scope.launch { pagerState.animateScrollToPage(index) }
+                            },
                             text = { Text(stringResource(tab.label)) }
                         )
                     }
@@ -120,19 +139,37 @@ fun AssetsLayout(
             }
         }
     ) { innerPadding ->
-        // Content Area
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.assets.isEmpty()) {
-                UnavailableText(modifier = Modifier.align(Alignment.Center))
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(
-                        items = uiState.assets,
-                        key = { it.name } // Ensure name is unique, otherwise use a fallback ID
-                    ) { asset ->
-                        AssetItem(asset = asset, onDeleteClick = { onDeleteClick(asset) })
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) { pageIndex ->
+            // 直接从 UiState 获取该页面的过滤列表
+            val filteredAssets = uiState.filteredAssetsByTab.getOrNull(pageIndex) ?: emptyList()
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                    filteredAssets.isEmpty() -> {
+                        UnavailableText(modifier = Modifier.align(Alignment.Center))
+                    }
+                    else -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(
+                                items = filteredAssets,
+                                key = { it.name }
+                            ) { asset ->
+                                AssetItem(
+                                    asset = asset,
+                                    onDeleteClick = { onDeleteClick(asset) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -145,9 +182,13 @@ fun AssetItem(
     asset: AssetInfo,
     onDeleteClick: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
         Row(
-            modifier = Modifier.padding(16.dp), // Adjusted padding
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -164,10 +205,12 @@ fun AssetItem(
                 modifier = Modifier.padding(start = 4.dp, end = 16.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = asset.name, style = MaterialTheme.typography.titleMedium)
-                // Use the helper extension here for cleaner code
                 Text(
-                    text = asset.type.toDisplayName() + " | ${asset.size.formatSizeFromKB()}",
+                    text = asset.name,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "${asset.type.toDisplayName()} | ${asset.size.formatSizeFromKB()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -185,14 +228,12 @@ fun AssetItem(
 
 @Composable
 fun UnavailableText(modifier: Modifier = Modifier) {
-    // Improved Empty State
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // You could add an Icon here later
         Text(
-            text = "这里空空如也", // Or string resource
+            text = "这里空空如也",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
