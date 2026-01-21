@@ -34,7 +34,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name,
-                    type = AssetType.Blueprint
+                    type = AssetType.Blueprint,
+                    size = path.sizeInKb()
                 )
             }
             .toList()
@@ -51,7 +52,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name.removeSuffix(".pack"),
-                    type = AssetType.Mod(ModType.PART_ASSET_PACK)
+                    type = AssetType.Mod(ModType.PART_ASSET_PACK),
+                    size = path.sizeInKb()
                 )
             }
         val example = "Example"
@@ -65,7 +67,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name,
-                    type = AssetType.Mod(ModType.TEXTURE_PACK)
+                    type = AssetType.Mod(ModType.TEXTURE_PACK),
+                    size = path.sizeInKb()
                 )
             }
         return partsList + texturePacksList
@@ -82,7 +85,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name,
-                    type = AssetType.World
+                    type = AssetType.World,
+                    size = path.sizeInKb()
                 )
             }
             .toList()
@@ -101,7 +105,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name,
-                    type = AssetType.CustomSolarSystem
+                    type = AssetType.CustomSolarSystem,
+                    size = path.sizeInKb()
                 )
             }
             .toList()
@@ -121,7 +126,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             .map { path ->
                 AssetInfo(
                     name = path.name.removeSuffix(".txt"),
-                    type = AssetType.CustomTranslation
+                    type = AssetType.CustomTranslation,
+                    size = path.sizeInKb()
                 )
             }
             .toList()
@@ -147,4 +153,18 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             fileSystem.deleteRecursively(it)
         }
     }
+
+    private fun Path.sizeInKb(): Double {
+    val metadata = fileSystem.metadata(this)
+
+    val bytes = if (metadata.isDirectory) {
+        fileSystem.listRecursively(this)
+            .filter { !fileSystem.metadata(it).isDirectory }
+            .sumOf { fileSystem.metadata(it).size ?: 0L }
+    } else {
+        metadata.size ?: 0L
+    }
+
+    return bytes / 1024.0
+}
 }

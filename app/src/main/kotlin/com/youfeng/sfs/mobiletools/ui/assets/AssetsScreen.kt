@@ -44,6 +44,7 @@ import com.youfeng.sfs.mobiletools.R
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.common.model.ModType
+import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,7 +56,7 @@ fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Optional: Reload when screen becomes active if data might change externally
-    LaunchedEffect(Unit) {
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
         viewModel.loadAssets() 
     }
 
@@ -149,11 +150,24 @@ fun AssetItem(
             modifier = Modifier.padding(16.dp), // Adjusted padding
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(
+                    when (asset.type) {
+                        is AssetType.Blueprint -> R.drawable.draft_24px
+                        is AssetType.Mod -> R.drawable.extension_24px
+                        is AssetType.World -> R.drawable.save_24px
+                        is AssetType.CustomSolarSystem -> R.drawable.planet_24px
+                        is AssetType.CustomTranslation -> R.drawable.translate_24px
+                    }
+                ),
+                contentDescription = null,
+                modifier = Modifier.padding(start = 4.dp, end = 16.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = asset.name, style = MaterialTheme.typography.titleMedium)
                 // Use the helper extension here for cleaner code
                 Text(
-                    text = asset.type.toDisplayName(),
+                    text = asset.type.toDisplayName() + " | ${asset.size.formatSizeFromKB()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

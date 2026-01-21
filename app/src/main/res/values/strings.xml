@@ -10,7 +10,7 @@
     <string name="tab_custom_solar_systems">星系</string>
     <string name="tab_custom_translations">翻译</string>
     <string name="asset_type_blueprint">蓝图</string>
-    <string name="asset_type_mod">Mod（%s）</string>
+    <string name="asset_type_mod">Mod (%s)</string>
     <string name="asset_type_world">世界</string>
     <string name="asset_type_custom_solar_system">自定义星系</string>
     <string name="asset_type_custom_translation">自定义翻译</string>
