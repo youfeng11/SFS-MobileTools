@@ -97,6 +97,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.dagger.hilt.android)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.timber)
     ksp(libs.dagger.hilt.android.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

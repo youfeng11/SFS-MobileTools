@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import timber.log.Timber
 
 @HiltViewModel
 class AssetsViewModel @Inject constructor(
@@ -43,7 +44,9 @@ class AssetsViewModel @Inject constructor(
                 filterAssets(assets, tab)
             },
             assetToDelete = toDelete
-        )
+        ).also {
+            Timber.i(it.toString())
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -55,12 +58,14 @@ class AssetsViewModel @Inject constructor(
     }
 
     fun loadAssets() {
+        Timber.i("加载资源")
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.update { true }
             try {
                 val list = dataRepository.getAssetsList()
                 _rawAssets.value = list
             } catch (e: Exception) {
+                Timber.e(e, "加载资源出错！")
                 _rawAssets.value = emptyList()
             } finally {
                 _isLoading.update { false }

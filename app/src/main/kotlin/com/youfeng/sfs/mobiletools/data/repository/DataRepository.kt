@@ -9,6 +9,7 @@ import javax.inject.Singleton
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.Path
+import timber.log.Timber
 import com.youfeng.sfs.mobiletools.common.model.ModType
 
 interface DataRepository {
@@ -25,7 +26,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
 
     private fun getBlueprintsList(): List<AssetInfo> {
         val directory = SfsFileConfig.blueprintsPath
-        val filesSequence = fileSystem.list(directory)
+        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
@@ -42,7 +44,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     }
 
     private fun getModsList(): List<AssetInfo> {
-        val partsFilesSequence = fileSystem.list(SfsFileConfig.partsModsPath)
+        val partsFilesSequence = fileSystem.listOrNull(SfsFileConfig.partsModsPath) ?: emptyList()
+        Timber.v(partsFilesSequence.toString())
         val partsList = partsFilesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
@@ -57,7 +60,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
                 )
             }
         val example = "Example"
-        val texturePacksFilesSequence = fileSystem.list(SfsFileConfig.texturePacksModsPath)
+        val texturePacksFilesSequence = fileSystem.listOrNull(SfsFileConfig.texturePacksModsPath) ?: emptyList()
+        Timber.v(texturePacksFilesSequence.toString())
         val texturePacksList = texturePacksFilesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
@@ -76,7 +80,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
 
     private fun getWorldsList(): List<AssetInfo> {
         val directory = SfsFileConfig.worldsPath
-        val filesSequence = fileSystem.list(directory)
+        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
@@ -95,7 +100,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     private fun getCustomSolarSystemsPath(): List<AssetInfo> {
         val example = "Example"
         val directory = SfsFileConfig.customSolarSystemsPath
-        val filesSequence = fileSystem.list(directory)
+        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
@@ -115,7 +121,8 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     private fun getCustomTranslationsList(): List<AssetInfo> {
         val exampleFile = "Example.txt"
         val directory = SfsFileConfig.customTranslationsPath
-        val filesSequence = fileSystem.list(directory)
+        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
