@@ -4,6 +4,7 @@ import android.content.Context
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.data.SfsFileConfig
+import com.youfeng.sfs.mobiletools.util.sizeInKb
 import javax.inject.Inject
 import javax.inject.Singleton
 import okio.FileSystem
@@ -12,21 +13,21 @@ import okio.Path
 import timber.log.Timber
 import com.youfeng.sfs.mobiletools.common.model.ModType
 
-interface DataRepository {
+interface AssetsRepository {
     fun getAssetsList(): List<AssetInfo>
     fun deleteAsset(asset: AssetInfo)
 }
 
 @Singleton
-class DataRepositoryImpl @Inject constructor() : DataRepository {
-    val fileSystem = FileSystem.SYSTEM
+class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
+    private val fileSystem = FileSystem.SYSTEM
 
     override fun getAssetsList(): List<AssetInfo> =
         getBlueprintsList() + getModsList() + getWorldsList() + getCustomSolarSystemsPath() + getCustomTranslationsList()
 
     private fun getBlueprintsList(): List<AssetInfo> {
         val directory = SfsFileConfig.blueprintsPath
-        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        val filesSequence = fileSystem.listOrNull(directory) ?: return emptyList()
         Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
@@ -44,7 +45,7 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     }
 
     private fun getModsList(): List<AssetInfo> {
-        val partsFilesSequence = fileSystem.listOrNull(SfsFileConfig.partsModsPath) ?: emptyList()
+        val partsFilesSequence = fileSystem.listOrNull(SfsFileConfig.partsModsPath) ?: return emptyList()
         Timber.v(partsFilesSequence.toString())
         val partsList = partsFilesSequence
             .filter { path ->
@@ -60,7 +61,7 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
                 )
             }
         val example = "Example"
-        val texturePacksFilesSequence = fileSystem.listOrNull(SfsFileConfig.texturePacksModsPath) ?: emptyList()
+        val texturePacksFilesSequence = fileSystem.listOrNull(SfsFileConfig.texturePacksModsPath) ?: return emptyList()
         Timber.v(texturePacksFilesSequence.toString())
         val texturePacksList = texturePacksFilesSequence
             .filter { path ->
@@ -80,7 +81,7 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
 
     private fun getWorldsList(): List<AssetInfo> {
         val directory = SfsFileConfig.worldsPath
-        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        val filesSequence = fileSystem.listOrNull(directory) ?: return emptyList()
         Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
@@ -100,7 +101,7 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     private fun getCustomSolarSystemsPath(): List<AssetInfo> {
         val example = "Example"
         val directory = SfsFileConfig.customSolarSystemsPath
-        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        val filesSequence = fileSystem.listOrNull(directory) ?: return emptyList()
         Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
@@ -121,7 +122,7 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
     private fun getCustomTranslationsList(): List<AssetInfo> {
         val exampleFile = "Example.txt"
         val directory = SfsFileConfig.customTranslationsPath
-        val filesSequence = fileSystem.listOrNull(directory) ?: emptyList()
+        val filesSequence = fileSystem.listOrNull(directory) ?: return emptyList()
         Timber.v(filesSequence.toString())
         return filesSequence
             .filter { path ->
@@ -160,18 +161,4 @@ class DataRepositoryImpl @Inject constructor() : DataRepository {
             fileSystem.deleteRecursively(it)
         }
     }
-
-    private fun Path.sizeInKb(): Double {
-    val metadata = fileSystem.metadata(this)
-
-    val bytes = if (metadata.isDirectory) {
-        fileSystem.listRecursively(this)
-            .filter { !fileSystem.metadata(it).isDirectory }
-            .sumOf { fileSystem.metadata(it).size ?: 0L }
-    } else {
-        metadata.size ?: 0L
-    }
-
-    return bytes / 1024.0
-}
 }

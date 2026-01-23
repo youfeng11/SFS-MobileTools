@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
-import com.youfeng.sfs.mobiletools.data.repository.DataRepository
+import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import timber.log.Timber
 
 @HiltViewModel
 class AssetsViewModel @Inject constructor(
-    private val dataRepository: DataRepository
+    private val assetsRepository: AssetsRepository
 ) : ViewModel() {
 
     // Internal state streams
@@ -39,10 +39,6 @@ class AssetsViewModel @Inject constructor(
             isLoading = loading,
             selectedTabIndex = tabIndex,
             allAssets = assets,
-            // 为每个 Tab 预先计算好过滤后的列表
-            filteredAssetsByTab = Tabs.entries.map { tab ->
-                filterAssets(assets, tab)
-            },
             assetToDelete = toDelete
         ).also {
             Timber.i(it.toString())
@@ -53,16 +49,12 @@ class AssetsViewModel @Inject constructor(
         initialValue = AssetsUiState(isLoading = true)
     )
 
-    init {
-        loadAssets()
-    }
-
     fun loadAssets() {
         Timber.i("加载资源")
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.update { true }
             try {
-                val list = dataRepository.getAssetsList()
+                val list = assetsRepository.getAssetsList()
                 _rawAssets.value = list
             } catch (e: Exception) {
                 Timber.e(e, "加载资源出错！")
@@ -88,21 +80,10 @@ class AssetsViewModel @Inject constructor(
         val asset = _assetToDelete.value ?: return
         
         viewModelScope.launch(Dispatchers.IO) {
-            dataRepository.deleteAsset(asset)
-            val updatedList = dataRepository.getAssetsList()
+            assetsRepository.deleteAsset(asset)
+            val updatedList = assetsRepository.getAssetsList()
             _rawAssets.value = updatedList
             _assetToDelete.value = null
-        }
-    }
-
-    private fun filterAssets(assets: List<AssetInfo>, tab: Tabs): List<AssetInfo> {
-        return when (tab) {
-            Tabs.ALL -> assets
-            Tabs.BLUEPRINTS -> assets.filter { it.type is AssetType.Blueprint }
-            Tabs.MODS -> assets.filter { it.type is AssetType.Mod }
-            Tabs.WORLDS -> assets.filter { it.type is AssetType.World }
-            Tabs.CUSTOM_SOLAR_SYSTEMS -> assets.filter { it.type is AssetType.CustomSolarSystem }
-            Tabs.CUSTOM_TRANSLATIONS -> assets.filter { it.type is AssetType.CustomTranslation }
         }
     }
 }

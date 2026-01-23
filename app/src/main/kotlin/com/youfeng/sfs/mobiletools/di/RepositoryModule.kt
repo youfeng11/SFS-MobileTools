@@ -1,7 +1,7 @@
 package com.youfeng.sfs.mobiletools.di
 
-import com.youfeng.sfs.mobiletools.data.repository.DataRepository
-import com.youfeng.sfs.mobiletools.data.repository.DataRepositoryImpl
+import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
+import com.youfeng.sfs.mobiletools.data.repository.AssetsRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,8 +16,8 @@ import dagger.hilt.components.SingletonComponent
 abstract class RepositoryModule {
 
     @Binds
-    abstract fun bindDataRepository(
-        dataRepositoryImpl: DataRepositoryImpl
-    ): DataRepository
+    abstract fun bindAssetsRepository(
+        assetsRepositoryImpl: AssetsRepositoryImpl
+    ): AssetsRepository
 
 }

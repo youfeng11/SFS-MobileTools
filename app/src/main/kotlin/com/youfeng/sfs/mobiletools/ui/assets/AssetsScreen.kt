@@ -27,7 +27,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -81,15 +84,6 @@ fun AssetsLayout(
     )
     val scope = rememberCoroutineScope()
 
-    // 单一的双向同步：Pager 滑动时通知 ViewModel
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.currentPage }.collect { page ->
-            if (uiState.selectedTabIndex != page) {
-                onTabIndexChanged(page)
-            }
-        }
-    }
-
     // ViewModel 状态变化时同步到 Pager（例如点击 Tab 时）
     LaunchedEffect(uiState.selectedTabIndex) {
         if (pagerState.currentPage != uiState.selectedTabIndex) {
@@ -124,13 +118,13 @@ fun AssetsLayout(
                 )
                 SecondaryScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
-                    edgePadding = 0.dp
+                    edgePadding = 4.dp
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = {
-                                scope.launch { pagerState.animateScrollToPage(index) }
+                                onTabIndexChanged(index)
                             },
                             text = { Text(stringResource(tab.label)) }
                         )
@@ -146,7 +140,19 @@ fun AssetsLayout(
                 .fillMaxSize()
         ) { pageIndex ->
             // 直接从 UiState 获取该页面的过滤列表
-            val filteredAssets = uiState.filteredAssetsByTab.getOrNull(pageIndex) ?: emptyList()
+            val currentTab = tabs[pageIndex]
+            val filteredAssets by remember(uiState.allAssets, currentTab) {
+                derivedStateOf {
+                    when (currentTab) {
+                        Tabs.ALL -> uiState.allAssets
+                        Tabs.BLUEPRINTS -> uiState.allAssets.filter { it.type is AssetType.Blueprint }
+                        Tabs.MODS -> uiState.allAssets.filter { it.type is AssetType.Mod }
+                        Tabs.WORLDS -> uiState.allAssets.filter { it.type is AssetType.World }
+                        Tabs.CUSTOM_SOLAR_SYSTEMS -> uiState.allAssets.filter { it.type is AssetType.CustomSolarSystem }
+                        Tabs.CUSTOM_TRANSLATIONS -> uiState.allAssets.filter { it.type is AssetType.CustomTranslation }
+                    }
+                }
+            }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
@@ -162,7 +168,7 @@ fun AssetsLayout(
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(
                                 items = filteredAssets,
-                                key = { it.name }
+                                key = { "${it.name}${it.type}" }
                             ) { asset ->
                                 AssetItem(
                                     asset = asset,
