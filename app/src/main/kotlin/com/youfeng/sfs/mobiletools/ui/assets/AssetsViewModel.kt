@@ -3,7 +3,6 @@ package com.youfeng.sfs.mobiletools.ui.assets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
-import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -14,8 +13,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import timber.log.Timber
+import javax.inject.Inject
 
 @HiltViewModel
 class AssetsViewModel @Inject constructor(
@@ -78,7 +77,7 @@ class AssetsViewModel @Inject constructor(
 
     fun confirmDelete() {
         val asset = _assetToDelete.value ?: return
-        
+
         viewModelScope.launch(Dispatchers.IO) {
             assetsRepository.deleteAsset(asset)
             val updatedList = assetsRepository.getAssetsList()

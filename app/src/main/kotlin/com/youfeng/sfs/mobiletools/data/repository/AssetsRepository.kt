@@ -1,17 +1,15 @@
 package com.youfeng.sfs.mobiletools.data.repository
 
-import android.content.Context
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
+import com.youfeng.sfs.mobiletools.common.model.ModType
 import com.youfeng.sfs.mobiletools.data.SfsFileConfig
 import com.youfeng.sfs.mobiletools.util.sizeInKb
-import javax.inject.Inject
-import javax.inject.Singleton
 import okio.FileSystem
-import okio.Path.Companion.toOkioPath
 import okio.Path
 import timber.log.Timber
-import com.youfeng.sfs.mobiletools.common.model.ModType
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface AssetsRepository {
     fun getAssetsList(): List<AssetInfo>
@@ -45,13 +43,14 @@ class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
     }
 
     private fun getModsList(): List<AssetInfo> {
-        val partsFilesSequence = fileSystem.listOrNull(SfsFileConfig.partsModsPath) ?: return emptyList()
+        val partsFilesSequence =
+            fileSystem.listOrNull(SfsFileConfig.partsModsPath) ?: return emptyList()
         Timber.v(partsFilesSequence.toString())
         val partsList = partsFilesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
                 !metadata.isDirectory &&
-                path.name.endsWith(".pack")
+                        path.name.endsWith(".pack")
             }
             .map { path ->
                 AssetInfo(
@@ -61,13 +60,14 @@ class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
                 )
             }
         val example = "Example"
-        val texturePacksFilesSequence = fileSystem.listOrNull(SfsFileConfig.texturePacksModsPath) ?: return emptyList()
+        val texturePacksFilesSequence =
+            fileSystem.listOrNull(SfsFileConfig.texturePacksModsPath) ?: return emptyList()
         Timber.v(texturePacksFilesSequence.toString())
         val texturePacksList = texturePacksFilesSequence
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
                 metadata.isDirectory &&
-                path.name != example
+                        path.name != example
             }
             .map { path ->
                 AssetInfo(
@@ -107,7 +107,7 @@ class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
                 metadata.isDirectory &&
-                path.name != example
+                        path.name != example
             }
             .map { path ->
                 AssetInfo(
@@ -128,8 +128,8 @@ class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
             .filter { path ->
                 val metadata = fileSystem.metadata(path)
                 !metadata.isDirectory &&
-                path.name.endsWith(".txt") &&
-                path.name != exampleFile
+                        path.name.endsWith(".txt") &&
+                        path.name != exampleFile
             }
             .map { path ->
                 AssetInfo(
@@ -151,6 +151,7 @@ class AssetsRepositoryImpl @Inject constructor() : AssetsRepository {
                     ModType.CODE_MOD -> null // 如果有代码插件路径，请补充
                 }
             }
+
             is AssetType.World -> SfsFileConfig.worldsPath / asset.name
             is AssetType.CustomSolarSystem -> SfsFileConfig.customSolarSystemsPath / asset.name
             is AssetType.CustomTranslation -> SfsFileConfig.customTranslationsPath / "${asset.name}.txt"

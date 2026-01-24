@@ -2,22 +2,18 @@ package com.youfeng.sfs.mobiletools.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -92,8 +88,8 @@ fun Navigation() {
     val navigator = remember { Navigator(navigationState) }
 
     val entryProvider = entryProvider {
-        entry<MainGraph> { 
-            MainGraphScreen(navigator) 
+        entry<MainGraph> {
+            MainGraphScreen(navigator)
         }
         // 详情页使用从右侧滑入的动画
         entry<Detail>(
@@ -102,32 +98,32 @@ fun Navigation() {
                     initialOffsetX = { it },
                     animationSpec = tween(ANIMATION_DURATION)
                 ) + fadeIn(animationSpec = tween(ANIMATION_DURATION)) togetherWith
-                slideOutHorizontally(
-                    targetOffsetX = { -it / 3 },
-                    animationSpec = tween(ANIMATION_DURATION)
-                ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
+                        slideOutHorizontally(
+                            targetOffsetX = { -it / 3 },
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
             } + NavDisplay.popTransitionSpec {
                 slideInHorizontally(
                     initialOffsetX = { -it / 3 },
                     animationSpec = tween(ANIMATION_DURATION)
                 ) + fadeIn(animationSpec = tween(ANIMATION_DURATION)) togetherWith
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(ANIMATION_DURATION)
-                ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
             } + NavDisplay.predictivePopTransitionSpec {
                 // 预见式返回动画：用户滑动时的实时预览
                 slideInHorizontally(
                     initialOffsetX = { -it / 3 },
                     animationSpec = tween(ANIMATION_DURATION)
                 ) + fadeIn(animationSpec = tween(ANIMATION_DURATION)) togetherWith
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(ANIMATION_DURATION)
-                ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) + fadeOut(animationSpec = tween(ANIMATION_DURATION))
             }
-        ) { 
-            SettingsScreen() 
+        ) {
+            SettingsScreen()
         }
     }
 
@@ -152,7 +148,7 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
         entry<Home>(
             metadata = NavDisplay.predictivePopTransitionSpec {
                 fadeIn(animationSpec = tween(FADE_DURATION)) togetherWith
-                fadeOut(animationSpec = tween(FADE_DURATION))
+                        fadeOut(animationSpec = tween(FADE_DURATION))
             }
         ) {
             HomeScreen(
@@ -164,7 +160,7 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
         entry<Assets>(
             metadata = NavDisplay.predictivePopTransitionSpec {
                 fadeIn(animationSpec = tween(FADE_DURATION)) togetherWith
-                fadeOut(animationSpec = tween(FADE_DURATION))
+                        fadeOut(animationSpec = tween(FADE_DURATION))
             }
         ) {
             AssetsScreen()
@@ -172,7 +168,7 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
         entry<Settings>(
             metadata = NavDisplay.predictivePopTransitionSpec {
                 fadeIn(animationSpec = tween(FADE_DURATION)) togetherWith
-                fadeOut(animationSpec = tween(FADE_DURATION))
+                        fadeOut(animationSpec = tween(FADE_DURATION))
             }
         ) {
             SettingsScreen()

@@ -7,12 +7,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import okio.FileSystem
-import okio.Path.Companion.toOkioPath
 import okio.Path
+import okio.Path.Companion.toOkioPath
 import okio.buffer
-import okio.sink
+import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -28,8 +27,8 @@ class FileLoggingTree @Inject constructor(
     private val fs = FileSystem.SYSTEM
 
     private val logFile = File(context.getExternalFilesDir(null), "logs").apply {
-            mkdirs()
-        }.toOkioPath() / "app_log_${System.currentTimeMillis()}.txt"
+        mkdirs()
+    }.toOkioPath() / "app_log_${System.currentTimeMillis()}.txt"
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
     private val maxLogAgeMs = 7 * 24 * 60 * 60 * 1000L  // 保留 7 天
 
@@ -43,8 +42,10 @@ class FileLoggingTree @Inject constructor(
         val logDir = logFile.parent ?: return@launch
         fs.list(logDir).forEach { path ->
             val metadata = fs.metadata(path)
-            if (metadata.isRegularFile && now - (metadata.lastModifiedAtMillis ?: now) > maxLogAgeMs) {
-                val deleted = fs.delete(path)
+            if (metadata.isRegularFile && now - (metadata.lastModifiedAtMillis
+                    ?: now) > maxLogAgeMs
+            ) {
+                fs.delete(path)
                 Log.i(
                     "FileLoggingTree",
                     "自动清理旧日志: ${path.name}"

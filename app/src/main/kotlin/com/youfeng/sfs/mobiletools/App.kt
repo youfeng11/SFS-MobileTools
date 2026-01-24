@@ -1,7 +1,7 @@
 package com.youfeng.sfs.mobiletools
 
-import android.os.Build
 import android.app.Application
+import android.os.Build
 import com.youfeng.sfs.mobiletools.common.logging.FileLoggingTree
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -9,7 +9,8 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class App : Application() {
-    @Inject lateinit var fileLoggingTree: FileLoggingTree
+    @Inject
+    lateinit var fileLoggingTree: FileLoggingTree
 
     override fun onCreate() {
         super.onCreate()

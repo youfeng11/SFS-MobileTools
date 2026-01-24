@@ -29,10 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -48,7 +46,6 @@ import com.youfeng.sfs.mobiletools.R
 import com.youfeng.sfs.mobiletools.common.model.AssetInfo
 import com.youfeng.sfs.mobiletools.common.model.AssetType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
-import kotlinx.coroutines.launch
 
 @Composable
 fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
@@ -82,7 +79,7 @@ fun AssetsLayout(
         initialPage = uiState.selectedTabIndex,
         pageCount = { tabs.size }
     )
-    val scope = rememberCoroutineScope()
+    rememberCoroutineScope()
 
     // ViewModel 状态变化时同步到 Pager（例如点击 Tab 时）
     LaunchedEffect(uiState.selectedTabIndex) {
@@ -161,9 +158,11 @@ fun AssetsLayout(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
+
                     filteredAssets.isEmpty() -> {
                         UnavailableText(modifier = Modifier.align(Alignment.Center))
                     }
+
                     else -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(

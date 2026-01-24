@@ -18,6 +18,7 @@ fun AssetType.toDisplayName(): String {
             }
             stringResource(R.string.asset_type_mod, stringResource(subTypeRes))
         }
+
         is AssetType.World -> stringResource(R.string.asset_type_world)
         is AssetType.CustomSolarSystem -> stringResource(R.string.asset_type_custom_solar_system)
         is AssetType.CustomTranslation -> stringResource(R.string.asset_type_custom_translation)
