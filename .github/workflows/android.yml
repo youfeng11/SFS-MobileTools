@@ -28,14 +28,10 @@ jobs:
           echo "Found compileSdk: $COMPILE_SDK"
           echo "COMPILE_SDK=$COMPILE_SDK" >> $GITHUB_ENV
 
-          NDK_VERSION=$(grep 'ndkVersion =' app/build.gradle.kts | sed 's/.*=//' | sed 's/ //g' | tr -d '"')
-          echo "Found ndkVersion: $NDK_VERSION"
-          echo "NDK_VERSION=$NDK_VERSION" >> $GITHUB_ENV
-
       - name: Set up Android SDK and NDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-${{ env.COMPILE_SDK }} ndk;${{ env.NDK_VERSION }}"
+          packages: "platforms;android-${{ env.COMPILE_SDK }} ndk;25.2.9519653"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
