@@ -24,7 +24,8 @@ jobs:
       - name: Parse SDK versions
         id: parse-versions
         run: |
-          COMPILE_SDK=$(grep 'compileSdk =' app/build.gradle.kts | sed 's/.*=//' | sed 's/ //g')
+          COMPILE_SDK=$(grep -R "release(" app/build.gradle.kts \
+              | sed -E 's/.*release\(([0-9]+)\).*/\1/')
           echo "Found compileSdk: $COMPILE_SDK"
           echo "COMPILE_SDK=$COMPILE_SDK" >> $GITHUB_ENV
 
