@@ -18,6 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -66,6 +72,8 @@ import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.foundation.layout.calculateStartPadding
 
 @Composable
 fun AssetsScreen(
@@ -162,7 +170,10 @@ fun AssetsLayout(
                 )
                 SecondaryScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
-                    edgePadding = 4.dp
+                    edgePadding = WindowInsets.safeDrawing
+    .only(WindowInsetsSides.Horizontal)
+    .asPaddingValues()
+    .calculateStartPadding(LayoutDirection.Ltr)
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
