@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,24 +15,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youfeng.sfs.mobiletools.R
 import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.domain.model.AssetType
+import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 
 @Composable
@@ -247,7 +252,7 @@ fun InstallAssetDialog(
     val assetTypes = remember {
         listOf(
             AssetType.Blueprint,
-            AssetType.Mod(com.youfeng.sfs.mobiletools.domain.model.ModType.PART_ASSET_PACK),
+            AssetType.Mod(ModType.PART_ASSET_PACK),
             AssetType.World,
             AssetType.CustomSolarSystem,
             AssetType.CustomTranslation
@@ -258,8 +263,8 @@ fun InstallAssetDialog(
         "蓝图",
         "模组",
         "存档",
-        "自定义星系",
-        "自定义翻译"
+        "星系",
+        "翻译"
     )
 
     // File picker launcher
@@ -275,35 +280,75 @@ fun InstallAssetDialog(
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = "选择资源类型",
                     style = MaterialTheme.typography.labelLarge
                 )
 
-                MultiChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    assetTypeLabels.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            checked = selectedAssetTypeIndex == index,
-                            onCheckedChange = { selectedAssetTypeIndex = index },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = assetTypeLabels.size
-                            )
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1
+                // Scrollable FilterChips with gradient edges as scroll indicators
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    val scrollState = rememberScrollState()
+                    val showLeftIndicator by remember {
+                        derivedStateOf { scrollState.value > 0 }
+                    }
+                    val showRightIndicator by remember {
+                        derivedStateOf { scrollState.value < scrollState.maxValue }
+                    }
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(scrollState),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        assetTypeLabels.forEachIndexed { index, label ->
+                            FilterChip(
+                                selected = selectedAssetTypeIndex == index,
+                                onClick = { selectedAssetTypeIndex = index },
+                                label = { Text(label) },
+                                modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
                     }
+                    
+                    // Left gradient indicator
+                    if (showLeftIndicator) {
+                        Box(
+                            modifier = Modifier
+                                .width(24.dp)
+                                .height(48.dp)
+                                .align(Alignment.CenterStart)
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(
+                                            AlertDialogDefaults.containerColor,
+                                            AlertDialogDefaults.containerColor.copy(alpha = 0f)
+                                        )
+                                    )
+                                )
+                        )
+                    }
+                    
+                    // Right gradient indicator
+                    if (showRightIndicator) {
+                        Box(
+                            modifier = Modifier
+                                .width(24.dp)
+                                .height(48.dp)
+                                .align(Alignment.CenterEnd)
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(
+                                            AlertDialogDefaults.containerColor.copy(alpha = 0f),
+                                            AlertDialogDefaults.containerColor
+                                        )
+                                    )
+                                )
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedButton(
                     onClick = {
