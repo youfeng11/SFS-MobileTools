@@ -1,11 +1,17 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,11 +21,16 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MultiChoiceSegmentedButtonRow
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,12 +40,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -48,7 +63,10 @@ import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 
 @Composable
-fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
+fun AssetsScreen(
+    openInstallDialog: Boolean = false,
+    viewModel: AssetsViewModel = hiltViewModel()
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
@@ -57,10 +75,12 @@ fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
 
     AssetsLayout(
         uiState = uiState,
+        openInstallDialog = openInstallDialog,
         onTabIndexChanged = viewModel::onTabIndexChanged,
         onDeleteClick = viewModel::showDeleteConfirmation,
         onConfirmDelete = viewModel::confirmDelete,
-        onDismissDelete = { viewModel.showDeleteConfirmation(null) }
+        onDismissDelete = { viewModel.showDeleteConfirmation(null) },
+        onInstallAsset = viewModel::installAsset
     )
 }
 
@@ -68,10 +88,12 @@ fun AssetsScreen(viewModel: AssetsViewModel = hiltViewModel()) {
 @Composable
 fun AssetsLayout(
     uiState: AssetsUiState,
+    openInstallDialog: Boolean = false,
     onTabIndexChanged: (Int) -> Unit,
     onDeleteClick: (AssetInfo) -> Unit,
     onConfirmDelete: () -> Unit,
-    onDismissDelete: () -> Unit
+    onDismissDelete: () -> Unit,
+    onInstallAsset: (AssetType, Uri) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val tabs = Tabs.entries
@@ -80,6 +102,15 @@ fun AssetsLayout(
         pageCount = { tabs.size }
     )
     rememberCoroutineScope()
+
+    var showInstallDialog by remember { mutableStateOf(openInstallDialog) }
+
+    // Open dialog when openInstallDialog parameter changes
+    LaunchedEffect(openInstallDialog) {
+        if (openInstallDialog) {
+            showInstallDialog = true
+        }
+    }
 
     // ViewModel 状态变化时同步到 Pager（例如点击 Tab 时）
     LaunchedEffect(uiState.selectedTabIndex) {
@@ -101,6 +132,17 @@ fun AssetsLayout(
             },
             dismissButton = {
                 TextButton(onClick = onDismissDelete) { Text("取消") }
+            }
+        )
+    }
+
+    // Install Asset Dialog
+    if (showInstallDialog) {
+        InstallAssetDialog(
+            onDismiss = { showInstallDialog = false },
+            onInstall = { assetType, uri ->
+                onInstallAsset(assetType, uri)
+                showInstallDialog = false
             }
         )
     }
@@ -127,6 +169,16 @@ fun AssetsLayout(
                         )
                     }
                 }
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showInstallDialog = true }
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.add_24px),
+                    contentDescription = "安装资源"
+                )
             }
         }
     ) { innerPadding ->
@@ -180,6 +232,122 @@ fun AssetsLayout(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun InstallAssetDialog(
+    onDismiss: () -> Unit,
+    onInstall: (AssetType, Uri) -> Unit
+) {
+    var selectedAssetTypeIndex by remember { mutableIntStateOf(0) }
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+
+    val assetTypes = remember {
+        listOf(
+            AssetType.Blueprint,
+            AssetType.Mod(com.youfeng.sfs.mobiletools.domain.model.ModType.PART_ASSET_PACK),
+            AssetType.World,
+            AssetType.CustomSolarSystem,
+            AssetType.CustomTranslation
+        )
+    }
+
+    val assetTypeLabels = listOf(
+        "蓝图",
+        "模组",
+        "存档",
+        "自定义星系",
+        "自定义翻译"
+    )
+
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        selectedUri = uri
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("安装资源") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "选择资源类型",
+                    style = MaterialTheme.typography.labelLarge
+                )
+
+                MultiChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    assetTypeLabels.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            checked = selectedAssetTypeIndex == index,
+                            onCheckedChange = { selectedAssetTypeIndex = index },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = assetTypeLabels.size
+                            )
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        filePickerLauncher.launch(
+                            when (assetTypes[selectedAssetTypeIndex]) {
+                                is AssetType.Blueprint -> arrayOf("*/*") // 文件夹
+                                is AssetType.Mod -> arrayOf("*/*")
+                                is AssetType.World -> arrayOf("*/*")
+                                is AssetType.CustomSolarSystem -> arrayOf("*/*")
+                                is AssetType.CustomTranslation -> arrayOf("text/plain", "application/octet-stream")
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.folder_open_24px),
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = selectedUri?.lastPathSegment ?: "选择文件"
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    selectedUri?.let { uri ->
+                        onInstall(assetTypes[selectedAssetTypeIndex], uri)
+                    }
+                },
+                enabled = selectedUri != null
+            ) {
+                Text("安装")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
 }
 
 @Composable

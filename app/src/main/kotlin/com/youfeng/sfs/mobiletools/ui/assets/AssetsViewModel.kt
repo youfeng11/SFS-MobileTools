@@ -1,8 +1,10 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
+import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -79,10 +81,31 @@ class AssetsViewModel @Inject constructor(
         val asset = _assetToDelete.value ?: return
 
         viewModelScope.launch(Dispatchers.IO) {
-            assetsRepository.deleteAsset(asset)
-            val updatedList = assetsRepository.getAssetsList()
-            _rawAssets.value = updatedList
-            _assetToDelete.value = null
+            try {
+                assetsRepository.deleteAsset(asset)
+                val updatedList = assetsRepository.getAssetsList()
+                _rawAssets.value = updatedList
+                _assetToDelete.value = null
+            } catch (e: Exception) {
+                Timber.e(e, "删除资源失败")
+            }
+        }
+    }
+
+    fun installAsset(assetType: AssetType, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.update { true }
+            try {
+                assetsRepository.installAsset(assetType, uri)
+                // Reload assets after installation
+                val updatedList = assetsRepository.getAssetsList()
+                _rawAssets.value = updatedList
+                Timber.i("资源安装成功")
+            } catch (e: Exception) {
+                Timber.e(e, "安装资源失败")
+            } finally {
+                _isLoading.update { false }
+            }
         }
     }
 }

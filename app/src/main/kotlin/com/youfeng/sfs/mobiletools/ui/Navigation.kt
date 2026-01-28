@@ -13,7 +13,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -142,6 +146,16 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
     )
 
     val mainNavigator = remember { Navigator(mainNavigationState) }
+    var shouldOpenInstallDialog by remember { mutableStateOf(false) }
+
+    // Reset the flag after navigation completes
+    LaunchedEffect(mainNavigationState.topLevelRoute) {
+        if (mainNavigationState.topLevelRoute == Assets && shouldOpenInstallDialog) {
+            // Flag will be read by AssetsScreen
+        } else {
+            shouldOpenInstallDialog = false
+        }
+    }
 
     val mainEntryProvider = entryProvider {
         // 底部导航 Tab 使用淡入淡出动画
@@ -154,6 +168,10 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
             HomeScreen(
                 onNavigateToDetail = {
                     rootNavigator.navigate(Detail)
+                },
+                onNavigateToInstallAsset = {
+                    shouldOpenInstallDialog = true
+                    mainNavigator.navigate(Assets)
                 }
             )
         }
@@ -163,7 +181,7 @@ private fun MainGraphScreen(rootNavigator: Navigator) {
                         fadeOut(animationSpec = tween(FADE_DURATION))
             }
         ) {
-            AssetsScreen()
+            AssetsScreen(openInstallDialog = shouldOpenInstallDialog)
         }
         entry<Settings>(
             metadata = NavDisplay.predictivePopTransitionSpec {

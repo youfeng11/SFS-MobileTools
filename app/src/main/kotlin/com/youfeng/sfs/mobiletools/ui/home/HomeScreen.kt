@@ -1,5 +1,6 @@
 package com.youfeng.sfs.mobiletools.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -22,32 +24,38 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youfeng.sfs.mobiletools.R
 
 
 @Composable
 fun HomeScreen(
     onNavigateToDetail: () -> Unit,
+    onNavigateToInstallAsset: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-
-    Surface(modifier = Modifier.fillMaxSize()) { HomeLayout(onNavigateToDetail) }
+    Surface(modifier = Modifier.fillMaxSize()) {
+        HomeLayout(
+            onNavigatorToDetails = onNavigateToDetail,
+            onNavigateToInstallAsset = onNavigateToInstallAsset
+        )
+    }
 }
 
 
-// ... (HomeScreen Composable 保持不变)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeLayout(onNavigatorToDetails: () -> Unit) {
+fun HomeLayout(
+    onNavigatorToDetails: () -> Unit,
+    onNavigateToInstallAsset: () -> Unit
+) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -135,7 +143,73 @@ fun HomeLayout(onNavigatorToDetails: () -> Unit) {
                     }
                 }
             }
-            Button(onClick = { onNavigatorToDetails() }) {}
+
+            // 3. 快捷操作区域 (Quick Actions)
+            Text(
+                text = "快捷操作",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+
+            // Quick Action Cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Install Asset Quick Action
+                QuickActionCard(
+                    icon = R.drawable.add_24px,
+                    label = "安装资源",
+                    onClick = onNavigateToInstallAsset,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Placeholder for another quick action
+                QuickActionCard(
+                    icon = R.drawable.settings_24px,
+                    label = "设置",
+                    onClick = onNavigatorToDetails,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickActionCard(
+    icon: Int,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(100.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(icon),
+                contentDescription = label,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
