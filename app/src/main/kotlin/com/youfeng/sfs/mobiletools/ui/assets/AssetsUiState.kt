@@ -1,6 +1,6 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
-import com.youfeng.sfs.mobiletools.common.model.AssetInfo
+import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 
 data class AssetsUiState(
     val isLoading: Boolean = false,

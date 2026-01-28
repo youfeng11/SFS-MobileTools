@@ -1,8 +1,8 @@
 package com.youfeng.sfs.mobiletools.data.repository
 
-import com.youfeng.sfs.mobiletools.common.model.AssetInfo
-import com.youfeng.sfs.mobiletools.common.model.AssetType
-import com.youfeng.sfs.mobiletools.common.model.ModType
+import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
+import com.youfeng.sfs.mobiletools.domain.model.AssetType
+import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.data.SfsFileConfig
 import com.youfeng.sfs.mobiletools.util.sizeInKb
 import okio.FileSystem

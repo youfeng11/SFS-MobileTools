@@ -1,4 +1,4 @@
-package com.youfeng.sfs.mobiletools.common.model
+package com.youfeng.sfs.mobiletools.domain.model
 
 data class AssetInfo(
     val name: String,

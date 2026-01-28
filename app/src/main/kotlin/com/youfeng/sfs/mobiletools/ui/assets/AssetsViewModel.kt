@@ -2,7 +2,7 @@ package com.youfeng.sfs.mobiletools.ui.assets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.youfeng.sfs.mobiletools.common.model.AssetInfo
+import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

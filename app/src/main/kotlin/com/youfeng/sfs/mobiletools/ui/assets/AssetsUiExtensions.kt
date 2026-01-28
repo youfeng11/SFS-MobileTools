@@ -3,8 +3,8 @@ package com.youfeng.sfs.mobiletools.ui.assets
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.youfeng.sfs.mobiletools.R
-import com.youfeng.sfs.mobiletools.common.model.AssetType
-import com.youfeng.sfs.mobiletools.common.model.ModType
+import com.youfeng.sfs.mobiletools.domain.model.AssetType
+import com.youfeng.sfs.mobiletools.domain.model.ModType
 
 @Composable
 fun AssetType.toDisplayName(): String {

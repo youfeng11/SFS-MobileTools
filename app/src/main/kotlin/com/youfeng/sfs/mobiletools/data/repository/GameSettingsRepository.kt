@@ -1,9 +1,9 @@
 package com.youfeng.sfs.mobiletools.data.repository
 
-import com.youfeng.sfs.mobiletools.common.model.AssetInfo
-
+import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
+/*
 interface GameSettingsRepository {
-    fun getLanguageSettings(): List<AssetInfo>
+    fun getLanguageSettings(): GameLanguageSettingsDto
     fun setLanguageSettings(asset: AssetInfo, custom: Boolean)
 }
-
+*/

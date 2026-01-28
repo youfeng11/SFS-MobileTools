@@ -43,8 +43,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youfeng.sfs.mobiletools.R
-import com.youfeng.sfs.mobiletools.common.model.AssetInfo
-import com.youfeng.sfs.mobiletools.common.model.AssetType
+import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
+import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 
 @Composable
