@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -178,9 +180,9 @@ fun AssetsLayout(
                 SecondaryScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     edgePadding = WindowInsets.safeDrawing
-    .only(WindowInsetsSides.Horizontal)
-    .asPaddingValues()
-    .calculateStartPadding(LayoutDirection.Ltr)
+                        .only(WindowInsetsSides.Horizontal)
+                        .asPaddingValues()
+                        .calculateStartPadding(LayoutDirection.Ltr)
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
@@ -326,6 +328,17 @@ fun InstallAssetDialog(
                                 selected = selectedAssetTypeIndex == index,
                                 onClick = { selectedAssetTypeIndex = index },
                                 label = { Text(label) },
+                                leadingIcon = if (selectedAssetTypeIndex == index) {
+                                    {
+                                        Icon(
+                                            imageVector = ImageVector.vectorResource(R.drawable.check_24px),
+                                            contentDescription = "Localized Description",
+                                            modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                        )
+                                    }
+                                } else {
+                                    null
+                                },
                                 modifier = Modifier.padding(horizontal = 2.dp)
                             )
                         }
