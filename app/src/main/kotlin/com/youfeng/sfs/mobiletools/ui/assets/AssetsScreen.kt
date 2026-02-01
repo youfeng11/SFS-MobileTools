@@ -393,13 +393,15 @@ fun InstallAssetDialog(
                             }
                         )
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding
                 ) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.folder_open_24px),
                         contentDescription = null,
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text(
                         text = selectedUri?.lastPathSegment ?: "选择文件"
                     )
