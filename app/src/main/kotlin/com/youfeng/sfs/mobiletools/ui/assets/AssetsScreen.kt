@@ -383,15 +383,7 @@ fun InstallAssetDialog(
 
                 OutlinedButton(
                     onClick = {
-                        filePickerLauncher.launch(
-                            when (assetTypes[selectedAssetTypeIndex]) {
-                                is AssetType.Blueprint -> arrayOf("*/*") // 文件夹
-                                is AssetType.Mod -> arrayOf("*/*")
-                                is AssetType.World -> arrayOf("*/*")
-                                is AssetType.CustomSolarSystem -> arrayOf("*/*")
-                                is AssetType.CustomTranslation -> arrayOf("text/plain", "application/octet-stream")
-                            }
-                        )
+                        filePickerLauncher.launch(arrayOf("*/*"))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding
