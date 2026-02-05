@@ -73,7 +73,7 @@ fun HomeLayout(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(12.dp), // 在这里添加整体边距，不仅好看也防止卡片贴边
+                .padding(16.dp), // 在这里添加整体边距，不仅好看也防止卡片贴边
             verticalArrangement = Arrangement.spacedBy(12.dp) // 组件之间的垂直间距
         ) {
             // 1. 主状态 Card (Main Status)

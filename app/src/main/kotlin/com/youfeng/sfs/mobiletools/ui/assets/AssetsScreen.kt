@@ -31,7 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -78,6 +78,7 @@ import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun AssetsScreen(
@@ -241,7 +242,10 @@ fun AssetsLayout(
                     }
 
                     else -> {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 6.dp)
+                        ) {
                             items(
                                 items = filteredAssets,
                                 key = { "${it.name}${it.type}" }
@@ -425,7 +429,7 @@ fun AssetItem(
     asset: AssetInfo,
     onDeleteClick: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -434,19 +438,31 @@ fun AssetItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(
-                    when (asset.type) {
-                        is AssetType.Blueprint -> R.drawable.draft_24px
-                        is AssetType.Mod -> R.drawable.extension_24px
-                        is AssetType.World -> R.drawable.save_24px
-                        is AssetType.CustomSolarSystem -> R.drawable.planet_24px
-                        is AssetType.CustomTranslation -> R.drawable.translate_24px
-                    }
-                ),
-                contentDescription = null,
-                modifier = Modifier.padding(start = 4.dp, end = 16.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(
+                        when (asset.type) {
+                            is AssetType.Blueprint -> R.drawable.draft_24px
+                            is AssetType.Mod -> R.drawable.extension_24px
+                            is AssetType.World -> R.drawable.save_24px
+                            is AssetType.CustomSolarSystem -> R.drawable.planet_24px
+                            is AssetType.CustomTranslation -> R.drawable.translate_24px
+                        }
+                    ),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = asset.name,
