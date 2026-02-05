@@ -28,8 +28,8 @@ android {
         applicationId = "com.youfeng.sfs.mobiletools"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 41
+        versionName = "0.0.1-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
