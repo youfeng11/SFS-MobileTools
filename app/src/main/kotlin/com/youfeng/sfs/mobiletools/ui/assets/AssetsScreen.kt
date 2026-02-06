@@ -9,30 +9,31 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -66,6 +67,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -76,9 +78,6 @@ import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun AssetsScreen(
@@ -271,7 +270,7 @@ fun InstallAssetDialog(
 ) {
     var selectedAssetTypeIndex by remember { mutableIntStateOf(0) }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
-    val context = LocalContext.current
+    LocalContext.current
 
     val assetTypes = remember {
         listOf(
@@ -320,7 +319,7 @@ fun InstallAssetDialog(
                     val showRightIndicator by remember {
                         derivedStateOf { scrollState.value < scrollState.maxValue }
                     }
-                    
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -347,7 +346,7 @@ fun InstallAssetDialog(
                             )
                         }
                     }
-                    
+
                     // Left gradient indicator
                     if (showLeftIndicator) {
                         Box(
@@ -365,7 +364,7 @@ fun InstallAssetDialog(
                                 )
                         )
                     }
-                    
+
                     // Right gradient indicator
                     if (showRightIndicator) {
                         Box(

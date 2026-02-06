@@ -2,10 +2,10 @@ package com.youfeng.sfs.mobiletools.data.repository
 
 import android.content.Context
 import android.net.Uri
+import com.youfeng.sfs.mobiletools.data.SfsFileConfig
 import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.domain.model.ModType
-import com.youfeng.sfs.mobiletools.data.SfsFileConfig
 import com.youfeng.sfs.mobiletools.util.sizeInKb
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okio.FileSystem
@@ -191,18 +191,23 @@ class AssetsRepositoryImpl @Inject constructor(
                     val dirName = fileName.substringBeforeLast(".")
                     SfsFileConfig.blueprintsPath / dirName
                 }
+
                 is AssetType.Mod -> {
                     when (assetType.type) {
                         ModType.PART_ASSET_PACK -> {
-                            val packName = if (fileName.endsWith(".pack")) fileName else "$fileName.pack"
+                            val packName =
+                                if (fileName.endsWith(".pack")) fileName else "$fileName.pack"
                             SfsFileConfig.partsModsPath / packName
                         }
+
                         ModType.TEXTURE_PACK -> {
                             SfsFileConfig.texturePacksModsPath / fileName
                         }
+
                         ModType.CODE_MOD -> throw UnsupportedOperationException("Code mods not yet supported")
                     }
                 }
+
                 is AssetType.World -> SfsFileConfig.worldsPath / fileName
                 is AssetType.CustomSolarSystem -> SfsFileConfig.customSolarSystemsPath / fileName
                 is AssetType.CustomTranslation -> {
