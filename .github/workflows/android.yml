@@ -30,7 +30,7 @@ jobs:
           echo "COMPILE_SDK=$COMPILE_SDK" >> $GITHUB_ENV
 
       - name: Set up Android SDK and NDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: "platforms;android-${{ env.COMPILE_SDK }} ndk;25.2.9519653"
 
