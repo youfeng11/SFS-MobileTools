@@ -1,17 +1,17 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youfeng.sfs.mobiletools.data.repository.AssetsRepository
 import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
-import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,89 +23,109 @@ class AssetsViewModel @Inject constructor(
     private val assetsRepository: AssetsRepository
 ) : ViewModel() {
 
-    // Internal state streams
+    // --- 内部碎片化状态 (Internal States) ---
     private val _rawAssets = MutableStateFlow<List<AssetInfo>>(emptyList())
-    private val _selectedTabIndex = MutableStateFlow(0) // 直接存储索引而不是 Tab 枚举
+    private val _selectedTabIndex = MutableStateFlow(0)
     private val _assetToDelete = MutableStateFlow<AssetInfo?>(null)
     private val _isLoading = MutableStateFlow(false)
+    private val _showInstallDialog = MutableStateFlow(false) // 新增：接管安装弹窗状态
 
-    // Public UI state with filtered assets per tab
+    // --- 暴露给 UI 的单一状态流 (Exposed State) ---
+    // 你原来的 combine 逻辑，扩展了 dialog 状态
     val uiState: StateFlow<AssetsUiState> = combine(
         _rawAssets,
         _selectedTabIndex,
         _assetToDelete,
-        _isLoading
-    ) { assets, tabIndex, toDelete, loading ->
+        _isLoading,
+        _showInstallDialog
+    ) { assets, tabIndex, toDelete, loading, showInstall ->
         AssetsUiState(
             isLoading = loading,
             selectedTabIndex = tabIndex,
             allAssets = assets,
-            assetToDelete = toDelete
-        ).also {
-            Timber.i(it.toString())
-        }
+            assetToDelete = toDelete,
+            showInstallDialog = showInstall
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = AssetsUiState(isLoading = true)
     )
 
-    fun loadAssets() {
-        Timber.i("加载资源")
+    // --- 副作用通道 (Effect) ---
+    private val _effect = Channel<AssetsEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
+    // --- 唯一的入口 ---
+    fun processIntent(intent: AssetsIntent) {
+        when (intent) {
+            is AssetsIntent.LoadAssets -> loadAssets()
+            is AssetsIntent.SelectTab -> _selectedTabIndex.value = intent.index
+
+            is AssetsIntent.OpenInstallDialog -> _showInstallDialog.value = true
+            is AssetsIntent.CloseInstallDialog -> _showInstallDialog.value = false
+            is AssetsIntent.InstallAsset -> installAsset(intent.assetType, intent.uri)
+
+            is AssetsIntent.ClickDelete -> _assetToDelete.value = intent.asset
+            is AssetsIntent.CloseDeleteDialog -> _assetToDelete.value = null
+            is AssetsIntent.ConfirmDelete -> confirmDelete()
+        }
+    }
+
+    private fun loadAssets() {
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.update { true }
+            _isLoading.value = true
             try {
                 val list = assetsRepository.getAssetsList()
                 _rawAssets.value = list
             } catch (e: Exception) {
                 Timber.e(e, "加载资源出错！")
-                _rawAssets.value = emptyList()
+                sendEffect(AssetsEffect.ShowToast("加载资源失败: ${e.message}"))
             } finally {
-                _isLoading.update { false }
+                _isLoading.value = false
             }
         }
     }
 
-    // 统一的 Tab 切换入口，只接受索引
-    fun onTabIndexChanged(index: Int) {
-        if (index in Tabs.entries.indices) {
-            _selectedTabIndex.value = index
-        }
-    }
-
-    fun showDeleteConfirmation(asset: AssetInfo?) {
-        _assetToDelete.value = asset
-    }
-
-    fun confirmDelete() {
+    private fun confirmDelete() {
         val asset = _assetToDelete.value ?: return
-
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 assetsRepository.deleteAsset(asset)
                 val updatedList = assetsRepository.getAssetsList()
+
+                // 串行更新内部状态
                 _rawAssets.value = updatedList
                 _assetToDelete.value = null
+                sendEffect(AssetsEffect.ShowToast("删除成功"))
             } catch (e: Exception) {
                 Timber.e(e, "删除资源失败")
+                sendEffect(AssetsEffect.ShowToast("删除失败: ${e.message}"))
+                _assetToDelete.value = null
             }
         }
     }
 
-    fun installAsset(assetType: AssetType, uri: Uri) {
+    private fun installAsset(assetType: com.youfeng.sfs.mobiletools.domain.model.AssetType, uri: android.net.Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.update { true }
+            // 开始安装：关闭弹窗，显示加载
+            _showInstallDialog.value = false
+            _isLoading.value = true
             try {
                 assetsRepository.installAsset(assetType, uri)
-                // Reload assets after installation
                 val updatedList = assetsRepository.getAssetsList()
                 _rawAssets.value = updatedList
-                Timber.i("资源安装成功")
+                sendEffect(AssetsEffect.ShowToast("安装成功"))
             } catch (e: Exception) {
                 Timber.e(e, "安装资源失败")
+                sendEffect(AssetsEffect.ShowToast("安装失败: ${e.message}"))
             } finally {
-                _isLoading.update { false }
+                _isLoading.value = false
             }
         }
+    }
+
+    private fun sendEffect(effect: AssetsEffect) {
+        viewModelScope.launch { _effect.send(effect) }
     }
 }

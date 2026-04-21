@@ -1,6 +1,7 @@
 package com.youfeng.sfs.mobiletools.ui.assets
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -85,19 +86,35 @@ fun AssetsScreen(
     viewModel: AssetsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    LifecycleEventEffect(Lifecycle.Event.ON_START) {
-        viewModel.loadAssets()
+    // 处理外部传入的打开弹窗指令
+    LaunchedEffect(openInstallDialog) {
+        if (openInstallDialog) {
+            viewModel.processIntent(AssetsIntent.OpenInstallDialog)
+        }
     }
 
+    // 初始加载数据
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        viewModel.processIntent(AssetsIntent.LoadAssets)
+    }
+
+    // 处理一次性副作用 (Effect)
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is AssetsEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // 将 Intent 委托下去
     AssetsLayout(
         uiState = uiState,
-        openInstallDialog = openInstallDialog,
-        onTabIndexChanged = viewModel::onTabIndexChanged,
-        onDeleteClick = viewModel::showDeleteConfirmation,
-        onConfirmDelete = viewModel::confirmDelete,
-        onDismissDelete = { viewModel.showDeleteConfirmation(null) },
-        onInstallAsset = viewModel::installAsset
+        onIntent = viewModel::processIntent
     )
 }
 
@@ -105,12 +122,7 @@ fun AssetsScreen(
 @Composable
 fun AssetsLayout(
     uiState: AssetsUiState,
-    openInstallDialog: Boolean = false,
-    onTabIndexChanged: (Int) -> Unit,
-    onDeleteClick: (AssetInfo) -> Unit,
-    onConfirmDelete: () -> Unit,
-    onDismissDelete: () -> Unit,
-    onInstallAsset: (AssetType, Uri) -> Unit
+    onIntent: (AssetsIntent) -> Unit // 单向数据流：唯一向上通讯的通道
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val tabs = Tabs.entries
@@ -118,53 +130,39 @@ fun AssetsLayout(
         initialPage = uiState.selectedTabIndex,
         pageCount = { tabs.size }
     )
-    rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
 
-    var showInstallDialog by remember { mutableStateOf(openInstallDialog) }
-
-    // Open dialog when openInstallDialog parameter changes
-    LaunchedEffect(openInstallDialog) {
-        if (openInstallDialog) {
-            showInstallDialog = true
-        }
-    }
-
-    // ViewModel 状态变化时同步到 Pager（例如点击 Tab 时）
+    // 监听状态变化同步到 Pager
     LaunchedEffect(uiState.selectedTabIndex) {
         if (pagerState.currentPage != uiState.selectedTabIndex) {
             pagerState.animateScrollToPage(uiState.selectedTabIndex)
         }
     }
 
-    // Delete confirmation dialog
+    // 删除确认弹窗 (完全受控于 UiState)
     if (uiState.assetToDelete != null) {
         AlertDialog(
-            onDismissRequest = onDismissDelete,
+            onDismissRequest = { onIntent(AssetsIntent.CloseDeleteDialog) },
             title = { Text("确定删除吗？") },
             text = { Text("确定要删除 \"${uiState.assetToDelete.name}\" 吗？\n此操作不可撤销！") },
             confirmButton = {
                 TextButton(
-                    onClick = onConfirmDelete,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("删除")
-                }
+                    onClick = { onIntent(AssetsIntent.ConfirmDelete) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("删除") }
             },
             dismissButton = {
-                TextButton(onClick = onDismissDelete) { Text("取消") }
+                TextButton(onClick = { onIntent(AssetsIntent.CloseDeleteDialog) }) { Text("取消") }
             }
         )
     }
 
-    // Install Asset Dialog
-    if (showInstallDialog) {
+    // 安装弹窗 (完全受控于 UiState)
+    if (uiState.showInstallDialog) {
         InstallAssetDialog(
-            onDismiss = { showInstallDialog = false },
+            onDismiss = { onIntent(AssetsIntent.CloseInstallDialog) },
             onInstall = { assetType, uri ->
-                onInstallAsset(assetType, uri)
-                showInstallDialog = false
+                onIntent(AssetsIntent.InstallAsset(assetType, uri))
             }
         )
     }
@@ -188,7 +186,7 @@ fun AssetsLayout(
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = {
-                                onTabIndexChanged(index)
+                                onIntent(AssetsIntent.SelectTab(index))
                             },
                             text = { Text(stringResource(tab.label)) }
                         )
@@ -198,7 +196,7 @@ fun AssetsLayout(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showInstallDialog = true }
+                onClick = { onIntent(AssetsIntent.OpenInstallDialog) }
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.add_24px),
@@ -209,11 +207,10 @@ fun AssetsLayout(
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
+            modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) { pageIndex ->
-            // 直接从 UiState 获取该页面的过滤列表
+            // UI 的派生状态（Derived State）
+            // 列表过滤纯属 UI 展示逻辑，放在这里使用 derivedStateOf 是完全合理的 MVI 实践
             val currentTab = tabs[pageIndex]
             val filteredAssets by remember(uiState.allAssets, currentTab) {
                 derivedStateOf {
@@ -230,28 +227,17 @@ fun AssetsLayout(
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
-                    uiState.isLoading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
-                    filteredAssets.isEmpty() -> {
-                        UnavailableText(modifier = Modifier.align(Alignment.Center))
-                    }
-
+                    uiState.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    filteredAssets.isEmpty() -> UnavailableText(Modifier.align(Alignment.Center))
                     else -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            items(
-                                items = filteredAssets,
-                                key = { "${it.name}${it.type}" }
-                            ) { asset ->
+                            items(items = filteredAssets, key = { "${it.name}${it.type}" }) { asset ->
                                 AssetItem(
                                     asset = asset,
-                                    onDeleteClick = { onDeleteClick(asset) }
+                                    onDeleteClick = { onIntent(AssetsIntent.ClickDelete(asset)) }
                                 )
                             }
                         }
