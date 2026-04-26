@@ -132,9 +132,7 @@ fun AssetsLayout(
 
     // 监听状态变化同步到 Pager
     LaunchedEffect(uiState.selectedTabIndex) {
-        if (pagerState.currentPage != uiState.selectedTabIndex) {
-            pagerState.animateScrollToPage(uiState.selectedTabIndex)
-        }
+        pagerState.animateScrollToPage(uiState.selectedTabIndex)
     }
 
     // 删除确认弹窗 (完全受控于 UiState)
