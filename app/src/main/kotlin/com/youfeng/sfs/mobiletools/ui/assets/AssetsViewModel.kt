@@ -24,7 +24,6 @@ class AssetsViewModel @Inject constructor(
 
     // --- 内部碎片化状态 (Internal States) ---
     private val _rawAssets = MutableStateFlow<List<AssetInfo>>(emptyList())
-    private val _selectedTabIndex = MutableStateFlow(0)
     private val _assetToDelete = MutableStateFlow<AssetInfo?>(null)
     private val _isLoading = MutableStateFlow(false)
     private val _showInstallDialog = MutableStateFlow(false) // 新增：接管安装弹窗状态
@@ -33,14 +32,12 @@ class AssetsViewModel @Inject constructor(
     // 你原来的 combine 逻辑，扩展了 dialog 状态
     val uiState: StateFlow<AssetsUiState> = combine(
         _rawAssets,
-        _selectedTabIndex,
         _assetToDelete,
         _isLoading,
         _showInstallDialog
-    ) { assets, tabIndex, toDelete, loading, showInstall ->
+    ) { assets, toDelete, loading, showInstall ->
         AssetsUiState(
             isLoading = loading,
-            selectedTabIndex = tabIndex,
             allAssets = assets,
             assetToDelete = toDelete,
             showInstallDialog = showInstall
@@ -59,7 +56,6 @@ class AssetsViewModel @Inject constructor(
     fun processIntent(intent: AssetsIntent) {
         when (intent) {
             is AssetsIntent.LoadAssets -> loadAssets()
-            is AssetsIntent.SelectTab -> _selectedTabIndex.value = intent.index
 
             is AssetsIntent.OpenInstallDialog -> _showInstallDialog.value = true
             is AssetsIntent.CloseInstallDialog -> _showInstallDialog.value = false

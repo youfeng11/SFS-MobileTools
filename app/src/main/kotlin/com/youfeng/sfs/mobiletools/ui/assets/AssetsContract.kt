@@ -7,7 +7,6 @@ import com.youfeng.sfs.mobiletools.domain.model.AssetType
 // State: 描述 UI 的所有可见状态
 data class AssetsUiState(
     val isLoading: Boolean = false,
-    val selectedTabIndex: Int = 0,
     val allAssets: List<AssetInfo> = emptyList(),
     // 对话框状态统一收拢到 State
     val assetToDelete: AssetInfo? = null,
@@ -17,7 +16,6 @@ data class AssetsUiState(
 // Intent: 描述 UI 层触发的所有意图
 sealed interface AssetsIntent {
     data object LoadAssets : AssetsIntent
-    data class SelectTab(val index: Int) : AssetsIntent
 
     // 安装相关意图
     data object OpenInstallDialog : AssetsIntent

@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,6 +75,7 @@ import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.domain.model.ModType
 import com.youfeng.sfs.mobiletools.ui.component.InsetsSecondaryScrollableTabRow
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
+import kotlinx.coroutines.launch
 
 @Composable
 fun AssetsScreen(
@@ -121,15 +123,10 @@ fun AssetsLayout(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val tabs = Tabs.entries
+    val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
-        initialPage = uiState.selectedTabIndex,
         pageCount = { tabs.size }
     )
-
-    // 监听状态变化同步到 Pager
-    LaunchedEffect(uiState.selectedTabIndex) {
-        pagerState.animateScrollToPage(uiState.selectedTabIndex)
-    }
 
     // 删除确认弹窗 (完全受控于 UiState)
     if (uiState.assetToDelete != null) {
@@ -175,7 +172,9 @@ fun AssetsLayout(
                         Tab(
                             selected = pagerState.currentPage == index,
                             onClick = {
-                                onIntent(AssetsIntent.SelectTab(index))
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
                             },
                             text = { Text(stringResource(tab.label)) }
                         )
