@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,7 +55,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -128,7 +126,6 @@ fun AssetsLayout(
         initialPage = uiState.selectedTabIndex,
         pageCount = { tabs.size }
     )
-    val coroutineScope = rememberCoroutineScope()
 
     // 监听状态变化同步到 Pager
     LaunchedEffect(uiState.selectedTabIndex) {
@@ -203,7 +200,10 @@ fun AssetsLayout(
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
-                .padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding())
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
                 .fillMaxSize()
         ) { pageIndex ->
             // UI 的派生状态（Derived State）
@@ -238,7 +238,9 @@ fun AssetsLayout(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            items(items = filteredAssets, key = { "${it.name}${it.type}" }) { asset ->
+                            items(
+                                items = filteredAssets,
+                                key = { "${it.name}${it.type}" }) { asset ->
                                 AssetItem(
                                     asset = asset,
                                     onDeleteClick = { onIntent(AssetsIntent.ClickDelete(asset)) }

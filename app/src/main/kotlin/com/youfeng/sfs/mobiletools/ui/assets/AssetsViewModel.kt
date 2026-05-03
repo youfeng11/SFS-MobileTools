@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -106,7 +105,10 @@ class AssetsViewModel @Inject constructor(
         }
     }
 
-    private fun installAsset(assetType: com.youfeng.sfs.mobiletools.domain.model.AssetType, uri: android.net.Uri) {
+    private fun installAsset(
+        assetType: com.youfeng.sfs.mobiletools.domain.model.AssetType,
+        uri: android.net.Uri
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             // 开始安装：关闭弹窗，显示加载
             _showInstallDialog.value = false

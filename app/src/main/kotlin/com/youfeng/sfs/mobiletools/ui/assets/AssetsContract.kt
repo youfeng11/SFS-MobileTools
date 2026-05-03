@@ -10,20 +10,20 @@ data class AssetsUiState(
     val selectedTabIndex: Int = 0,
     val allAssets: List<AssetInfo> = emptyList(),
     // 对话框状态统一收拢到 State
-    val assetToDelete: AssetInfo? = null, 
-    val showInstallDialog: Boolean = false 
+    val assetToDelete: AssetInfo? = null,
+    val showInstallDialog: Boolean = false
 )
 
 // Intent: 描述 UI 层触发的所有意图
 sealed interface AssetsIntent {
     data object LoadAssets : AssetsIntent
     data class SelectTab(val index: Int) : AssetsIntent
-    
+
     // 安装相关意图
     data object OpenInstallDialog : AssetsIntent
     data object CloseInstallDialog : AssetsIntent
     data class InstallAsset(val assetType: AssetType, val uri: Uri) : AssetsIntent
-    
+
     // 删除相关意图
     data class ClickDelete(val asset: AssetInfo) : AssetsIntent
     data object ConfirmDelete : AssetsIntent
