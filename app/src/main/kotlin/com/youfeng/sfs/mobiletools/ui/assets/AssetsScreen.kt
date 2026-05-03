@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +41,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,6 +72,7 @@ import com.youfeng.sfs.mobiletools.R
 import com.youfeng.sfs.mobiletools.domain.model.AssetInfo
 import com.youfeng.sfs.mobiletools.domain.model.AssetType
 import com.youfeng.sfs.mobiletools.domain.model.ModType
+import com.youfeng.sfs.mobiletools.ui.component.InsetsSecondaryScrollableTabRow
 import com.youfeng.sfs.mobiletools.ui.util.formatSizeFromKB
 
 @Composable
@@ -168,11 +167,9 @@ fun AssetsLayout(
                     title = { Text(stringResource(R.string.navigation_assets)) },
                     scrollBehavior = scrollBehavior
                 )
-                SecondaryScrollableTabRow(
+                InsetsSecondaryScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
-                    edgePadding = TopAppBarDefaults.windowInsets
-                        .asPaddingValues()
-                        .calculateStartPadding(LocalLayoutDirection.current)
+                    edgePadding = 0.dp
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
