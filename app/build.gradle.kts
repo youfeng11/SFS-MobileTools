@@ -21,13 +21,13 @@ for (name in arrayOf("release.properties")) {
 android {
     namespace = "com.youfeng.sfs.mobiletools"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.youfeng.sfs.mobiletools"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 41
         versionName = "0.0.1-dev"
 
